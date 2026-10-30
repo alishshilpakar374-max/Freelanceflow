@@ -1,0 +1,133 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Maps Tailwind color names to our CSS variables.
+   `inline` makes utilities reference the variable directly,
+   so switching .dark at runtime just works. */
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+}
+
+:root {
+  color-scheme: light;
+  --background: #f8fafc;
+  --surface: #ffffff;
+  --surface-muted: #f1f5f9;
+  --border: #e2e8f0;
+  --foreground: #0f172a;
+  --muted: #64748b;
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-foreground: #ffffff;
+  --success: #15803d;
+  --warning: #b45309;
+  --danger: #b91c1c;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #020617;
+  --surface: #0f172a;
+  --surface-muted: #1e293b;
+  --border: #1e293b;
+  --foreground: #f1f5f9;
+  --muted: #94a3b8;
+  --primary: #6366f1;
+  --primary-hover: #818cf8;
+  --primary-foreground: #ffffff;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --danger: #f87171;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  html::-webkit-scrollbar:vertical,
+  body::-webkit-scrollbar:vertical,
+  *::-webkit-scrollbar:vertical {
+    display: none;
+    width: 0;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .no-scroll-y,
+  .overflow-y-auto,
+  .overflow-y-scroll,
+  .overflow-auto {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .no-scroll-y::-webkit-scrollbar:vertical,
+  .overflow-y-auto::-webkit-scrollbar:vertical,
+  .overflow-y-scroll::-webkit-scrollbar:vertical,
+  .overflow-auto::-webkit-scrollbar:vertical {
+    display: none;
+    width: 0;
+  }
+
+  .pipeline-h-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--muted) 60%, transparent)
+      transparent;
+    -ms-overflow-style: auto;
+  }
+
+  .pipeline-h-scroll::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .pipeline-h-scroll::-webkit-scrollbar:horizontal {
+    display: block;
+    height: 8px;
+  }
+
+  .pipeline-h-scroll::-webkit-scrollbar-track {
+    background: var(--surface-muted);
+    border-radius: 9999px;
+  }
+
+  .pipeline-h-scroll::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 9999px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
