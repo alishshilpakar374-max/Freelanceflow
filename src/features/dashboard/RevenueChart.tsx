@@ -34,18 +34,24 @@ export default function RevenueChart({
 
       <div className="mt-4 h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ left: 0, right: 8, top: 8 }}>
+          <AreaChart
+            data={data}
+            margin={{ left: 0, right: 8, top: 8 }}
+            style={{ outline: "none" }}
+          >
             <CartesianGrid
               vertical={false}
               stroke="var(--border)"
               strokeDasharray="3 3"
             />
+
             <XAxis
               dataKey="month"
               tick={axisTick}
               tickLine={false}
               axisLine={false}
             />
+
             <YAxis
               width={52}
               tick={axisTick}
@@ -53,10 +59,12 @@ export default function RevenueChart({
               axisLine={false}
               tickFormatter={(value: number) => formatCompactCurrency(value)}
             />
+
             <Tooltip
               {...tooltipProps}
               formatter={(value) => formatCurrency(Number(value))}
             />
+
             <Area
               type="monotone"
               dataKey="revenue"
@@ -65,6 +73,8 @@ export default function RevenueChart({
               strokeWidth={2}
               fill="var(--primary)"
               fillOpacity={0.15}
+              activeDot={{ r: 4 }}
+              isAnimationActive={false}
             />
           </AreaChart>
         </ResponsiveContainer>

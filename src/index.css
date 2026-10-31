@@ -131,3 +131,10 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+.recharts-wrapper,
+.recharts-wrapper:focus,
+.recharts-surface,
+.recharts-surface:focus {
+  outline: none !important;
+}

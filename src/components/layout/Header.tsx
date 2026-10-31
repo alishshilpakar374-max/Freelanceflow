@@ -3,7 +3,6 @@ import { useLocation } from "react-router-dom";
 import { navItems } from "@/components/layout/navigation";
 import { openMobileNav, toggleSidebar } from "@/components/layout/uiSlice";
 import Button from "@/components/ui/Button";
-import ThemeToggle from "@/features/settings/theme/ThemeToggle";
 import { useAppDispatch, useAppSelector } from "@/hooks/redux";
 import UserMenu from "@/features/auth/UserMenu";
 
@@ -49,8 +48,7 @@ export default function Header() {
         {current?.label ?? "FreelanceFlow"}
       </h1>
 
-      <div className="ml-auto flex items-center gap-3">
-        <ThemeToggle />
+      <div className="ml-auto flex items-center ">
         <UserMenu />
       </div>
     </header>
