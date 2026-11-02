@@ -27,23 +27,22 @@ type OutreachRequest = {
 // CORS SECURITY
 // ============================================
 
-function getAllowedOrigins(): string[] {
-  return (Deno.env.get("ALLOWED_ORIGINS") ?? "")
-    .split(",")
-    .map((origin) => origin.trim().replace(/\/$/, ""))
-    .filter(Boolean);
-}
+const ALLOWED_ORIGINS = [
+  "https://freelanceflow-official.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:3000",
+];
 
 function getCorsHeaders(origin: string | null): Headers {
   const headers = new Headers({
     "Access-Control-Allow-Headers":
-      "authorization, x-client-info, apikey, content-type",
+      "authorization, x-client-info, apikey, content-type, x-retry-count, traceparent, tracestate, baggage",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
   });
 
-  if (origin && getAllowedOrigins().includes(origin.replace(/\/$/, ""))) {
+  if (origin && ALLOWED_ORIGINS.includes(origin.replace(/\/$/, ""))) {
     headers.set("Access-Control-Allow-Origin", origin);
   }
 
@@ -100,7 +99,6 @@ async function readRequestBody(
     }
 
     const combined = new Uint8Array(totalBytes);
-
     let offset = 0;
 
     for (const chunk of chunks) {
@@ -287,43 +285,40 @@ Do not assume any unprovided facts.
 
 Deno.serve(async (req: Request): Promise<Response> => {
   const origin = req.headers.get("Origin");
-  const allowedOrigins = getAllowedOrigins();
   const corsHeaders = getCorsHeaders(origin);
 
   const respond = (body: unknown, status = 200): Response => {
     return createJsonResponse(body, status, new Headers(corsHeaders));
   };
 
-  // ------------------------------------------
-  // 1. CHECK REQUEST ORIGIN
-  // ------------------------------------------
-
-  if (origin && !allowedOrigins.includes(origin.replace(/\/$/, ""))) {
-    return respond({ error: "Origin not allowed." }, 403);
-  }
-
-  // ------------------------------------------
-  // 2. HANDLE CORS PREFLIGHT
-  // ------------------------------------------
-
+  // Handle browser preflight before origin, method, auth, and configuration checks.
   if (req.method === "OPTIONS") {
+    if (origin && !ALLOWED_ORIGINS.includes(origin.replace(/\/$/, ""))) {
+      return new Response(null, { status: 403, headers: corsHeaders });
+    }
+
     return new Response(null, {
       status: 204,
       headers: corsHeaders,
     });
   }
 
-  // ------------------------------------------
-  // 3. CHECK HTTP METHOD
-  // ------------------------------------------
+  // Reject requests from origins that are not on the allowlist.
+  if (origin && !ALLOWED_ORIGINS.includes(origin.replace(/\/$/, ""))) {
+    return respond({ error: "Origin not allowed." }, 403);
+  }
+
+  // ==========================================
+  // 1. CHECK HTTP METHOD
+  // ==========================================
 
   if (req.method !== "POST") {
     return respond({ error: "Method not allowed." }, 405);
   }
 
-  // ------------------------------------------
-  // 4. CHECK ENVIRONMENT CONFIGURATION
-  // ------------------------------------------
+  // ==========================================
+  // 2. CHECK ENVIRONMENT CONFIGURATION
+  // ==========================================
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
 
@@ -334,13 +329,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
   const geminiModel = Deno.env.get("GEMINI_MODEL");
 
-  if (
-    !supabaseUrl ||
-    !supabaseKey ||
-    !geminiApiKey ||
-    !geminiModel ||
-    allowedOrigins.length === 0
-  ) {
+  if (!supabaseUrl || !supabaseKey || !geminiApiKey || !geminiModel) {
     console.error("Required environment configuration is missing.");
 
     return respond({ error: "AI Outreach is not configured correctly." }, 500);
@@ -350,9 +339,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return respond({ error: "Invalid AI model configuration." }, 500);
   }
 
-  // ------------------------------------------
-  // 5. CHECK CONTENT TYPE
-  // ------------------------------------------
+  // ==========================================
+  // 3. CHECK CONTENT TYPE
+  // ==========================================
 
   const contentType = req.headers.get("Content-Type") ?? "";
 
@@ -360,9 +349,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return respond({ error: "Content-Type must be application/json." }, 415);
   }
 
-  // ------------------------------------------
-  // 6. AUTHENTICATION
-  // ------------------------------------------
+  // ==========================================
+  // 4. AUTHENTICATION
+  // ==========================================
 
   const authorization = req.headers.get("Authorization");
 
@@ -396,9 +385,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return respond({ error: "Could not verify authentication." }, 500);
   }
 
-  // ------------------------------------------
-  // 7. REQUEST SIZE VALIDATION
-  // ------------------------------------------
+  // ==========================================
+  // 5. REQUEST SIZE VALIDATION
+  // ==========================================
 
   const contentLength = req.headers.get("Content-Length");
 
@@ -428,9 +417,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return respond({ error: "Could not read request body." }, 400);
   }
 
-  // ------------------------------------------
-  // 8. JSON VALIDATION
-  // ------------------------------------------
+  // ==========================================
+  // 6. JSON VALIDATION
+  // ==========================================
 
   let body: unknown;
 
@@ -452,9 +441,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
     );
   }
 
-  // ------------------------------------------
-  // 9. DATABASE RATE LIMITING
-  // ------------------------------------------
+  // ==========================================
+  // 7. DATABASE RATE LIMITING
+  // ==========================================
 
   let allowed: string;
 
@@ -510,9 +499,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
     );
   }
 
-  // ------------------------------------------
-  // 10. GEMINI API REQUEST
-  // ------------------------------------------
+  // ==========================================
+  // 8. GEMINI API REQUEST
+  // ==========================================
 
   const controller = new AbortController();
 
@@ -562,9 +551,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
       },
     );
 
-    // ----------------------------------------
-    // 11. GEMINI ERROR HANDLING
-    // ----------------------------------------
+    // ========================================
+    // 9. GEMINI ERROR HANDLING
+    // ========================================
 
     if (!geminiResponse.ok) {
       console.error(
@@ -617,9 +606,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // ----------------------------------------
-    // 12. PROCESS GEMINI RESPONSE
-    // ----------------------------------------
+    // ========================================
+    // 10. PROCESS GEMINI RESPONSE
+    // ========================================
 
     const result = await geminiResponse.json();
 
@@ -654,9 +643,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // ----------------------------------------
-    // 13. SUCCESS
-    // ----------------------------------------
+    // ========================================
+    // 11. SUCCESS
+    // ========================================
 
     return respond({
       message: generatedText,
