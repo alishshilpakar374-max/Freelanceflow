@@ -42,9 +42,9 @@ function ProjectForm({ project, leads, onClose }: ProjectFormProps) {
       : emptyProjectFormValues,
   });
 
-  const sortedLeads = [...leads].sort((a, b) =>
-    a.businessName.localeCompare(b.businessName),
-  );
+  const sortedLeads = leads
+    .filter((lead) => lead.status === "won")
+    .sort((a, b) => a.businessName.localeCompare(b.businessName));
 
   const submit = handleSubmit(async (values) => {
     setSubmitError(null);

@@ -20,6 +20,7 @@ import {
   LEAD_STATUS_LABELS,
 } from "@/lib/constants";
 import type { Lead, LeadInput } from "@/types";
+import { useLeads } from "@/features/leads/useLeads";
 
 interface LeadFormProps {
   lead?: Lead;
@@ -29,6 +30,8 @@ interface LeadFormProps {
 
 export default function LeadForm({ lead, onSubmit, onCancel }: LeadFormProps) {
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const { leads } = useLeads();
 
   const {
     register,
@@ -41,6 +44,32 @@ export default function LeadForm({ lead, onSubmit, onCancel }: LeadFormProps) {
 
   const submit = handleSubmit(async (values) => {
     setSubmitError(null);
+
+    const normalize = (value: string) => value.trim().toLowerCase();
+
+    const duplicate = leads.find((existing) => {
+      // Don't compare the lead against itself while editing
+      if (lead && existing.id === lead.id) return false;
+
+      const sameBusiness =
+        normalize(existing.businessName) === normalize(values.businessName);
+
+      const sameEmail =
+        values.email.trim() &&
+        normalize(existing.email) === normalize(values.email);
+
+      const samePhone =
+        values.phone.trim() && existing.phone.trim() === values.phone.trim();
+
+      return sameBusiness || sameEmail || samePhone;
+    });
+
+    if (duplicate) {
+      setSubmitError(
+        "This lead already exists. Check the business name, email, or phone number.",
+      );
+      return;
+    }
 
     try {
       const message = await onSubmit(formValuesToLeadInput(values));

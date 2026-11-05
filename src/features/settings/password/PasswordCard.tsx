@@ -12,6 +12,7 @@ import PasswordInput from "@/features/auth/PasswordInput";
 import { useAppDispatch } from "@/hooks/redux";
 
 import { LockKeyhole, ShieldCheck } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface PasswordCardProps {
   email: string;
@@ -138,6 +139,18 @@ export default function PasswordCard({ email }: PasswordCardProps) {
               />
             )}
           </FormField>
+        </div>
+
+        {/* Forgot password */}
+        <div className="flex items-center justify-between text-sm">
+          <p className="text-muted">Forgot your current password?</p>
+
+          <Link
+            to="/forgot-password"
+            className="font-medium text-primary transition-colors hover:underline"
+          >
+            Reset password
+          </Link>
         </div>
 
         {/* Footer */}

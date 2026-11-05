@@ -12,11 +12,13 @@ export interface AuthUser {
 interface AuthState {
   status: AuthStatus;
   user: AuthUser | null;
+  isPasswordRecovery: boolean;
 }
 
 const initialState: AuthState = {
-  status: "loading", // we don't know yet until Supabase reports the stored session
+  status: "loading",
   user: null,
+  isPasswordRecovery: false,
 };
 
 const authSlice = createSlice({
@@ -27,8 +29,6 @@ const authSlice = createSlice({
       const next = action.payload;
       const current = state.user;
 
-      // Supabase re-announces the session on token refresh and tab focus.
-      // If nothing really changed, keep the old object so components don't re-render.
       if (
         next !== null &&
         current !== null &&
@@ -41,9 +41,17 @@ const authSlice = createSlice({
 
       state.user = next;
       state.status = next ? "authenticated" : "unauthenticated";
+
+      if (!next) {
+        state.isPasswordRecovery = false;
+      }
+    },
+
+    setPasswordRecovery(state, action: PayloadAction<boolean>) {
+      state.isPasswordRecovery = action.payload;
     },
   },
 });
 
-export const { sessionChanged } = authSlice.actions;
+export const { sessionChanged, setPasswordRecovery } = authSlice.actions;
 export default authSlice.reducer;

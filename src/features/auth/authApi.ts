@@ -9,23 +9,31 @@ function toMessage(error: AuthError): string {
   switch (error.code) {
     case "invalid_credentials":
       return "Incorrect email or password.";
+
     case "email_not_confirmed":
       return "Please confirm your email first. Check your inbox for the link.";
+
     case "user_already_exists":
     case "email_exists":
       return "An account with this email already exists. Try signing in instead.";
+
     case "weak_password":
       return "That password is too weak. Try a longer or less common one.";
+
     case "same_password":
       return "Your new password must be different from the old one.";
+
     case "reauthentication_needed":
       return "For security, please sign out, sign back in, and try again.";
+
     case "session_expired":
     case "session_not_found":
       return "Your session expired. Please sign in again.";
+
     case "over_request_rate_limit":
     case "over_email_send_rate_limit":
       return "Too many attempts. Please wait a few minutes and try again.";
+
     default:
       return "Something went wrong. Please try again.";
   }
@@ -35,7 +43,11 @@ export async function signIn(
   email: string,
   password: string,
 ): Promise<AuthResult> {
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
   return error ? { ok: false, message: toMessage(error) } : { ok: true };
 }
 
@@ -47,44 +59,59 @@ export async function signUp(
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name: fullName } },
+    options: {
+      data: { full_name: fullName },
+    },
   });
 
-  if (error) return { ok: false, message: toMessage(error) };
-  return { ok: true, needsEmailConfirmation: data.session === null };
+  if (error) {
+    return { ok: false, message: toMessage(error) };
+  }
+
+  return {
+    ok: true,
+    needsEmailConfirmation: data.session === null,
+  };
 }
 
 export async function signOut(): Promise<AuthResult> {
   const { error } = await supabase.auth.signOut();
+
   return error
     ? { ok: false, message: "Could not sign out. Please try again." }
     : { ok: true };
 }
 
-// Supabase answers the same way whether or not the email has an account,
-// so this never reveals who is registered.
+// Request password reset email
 export async function requestPasswordReset(email: string): Promise<AuthResult> {
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+  const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
     redirectTo: `${window.location.origin}/reset-password`,
   });
+
   return error ? { ok: false, message: toMessage(error) } : { ok: true };
 }
 
-// Works for a signed-in user, including the temporary session from a reset-email link.
+// Update password using the active Supabase session
 export async function updatePassword(newPassword: string): Promise<AuthResult> {
-  const { error } = await supabase.auth.updateUser({ password: newPassword });
-  if (error) return { ok: false, message: toMessage(error) };
+  const { error } = await supabase.auth.updateUser({
+    password: newPassword,
+  });
 
-  // Sign out every other device. A failure here must not hide the successful change.
+  if (error) {
+    return { ok: false, message: toMessage(error) };
+  }
+
+  // Sign out other devices without invalidating the current session.
   try {
     await supabase.auth.signOut({ scope: "others" });
   } catch {
-    // ignore
+    // Password was already changed.
   }
+
   return { ok: true };
 }
 
-// Verifies the current password first, so someone at an unlocked laptop can't change it.
+// Verify current password before changing it
 export async function changePassword(
   email: string,
   currentPassword: string,
@@ -94,6 +121,7 @@ export async function changePassword(
     email,
     password: currentPassword,
   });
+
   if (error) {
     return {
       ok: false,
@@ -103,9 +131,11 @@ export async function changePassword(
           : toMessage(error),
     };
   }
+
   return updatePassword(newPassword);
 }
 
+// Google OAuth
 export async function signInWithGoogle(): Promise<AuthResult> {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
