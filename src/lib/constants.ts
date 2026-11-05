@@ -41,8 +41,8 @@ export const LEAD_PRIORITY_LABELS: Record<LeadPriority, string> = {
 export const LEAD_SOURCES = [
   "referral",
   "website",
+  "google_maps",
   "social_media",
-  "cold_outreach",
   "job_board",
   "other",
 ] as const satisfies readonly LeadSource[];
@@ -51,7 +51,7 @@ export const LEAD_SOURCE_LABELS: Record<LeadSource, string> = {
   referral: "Referral",
   website: "Website",
   social_media: "Social media",
-  cold_outreach: "Cold outreach",
+  google_maps: "Google maps",
   job_board: "Job board",
   other: "Other",
 };

@@ -58,8 +58,8 @@ export interface FollowUp {
 export type LeadSource =
   | "referral"
   | "website"
+  | "google_maps"
   | "social_media"
-  | "cold_outreach"
   | "job_board"
   | "other";
 
