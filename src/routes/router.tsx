@@ -18,7 +18,6 @@ import ReportsPage from "@/features/reports/ReportsPage";
 import SettingsPage from "@/features/settings/SettingsPage";
 import ForgotPasswordPage from "@/features/auth/ForgotPasswordPage";
 import ResetPasswordPage from "@/features/auth/ResetPasswordPage";
-import RequirePasswordRecovery from "@/features/auth/RequirePasswordRecovery";
 
 export const router = createBrowserRouter([
   {
@@ -33,15 +32,12 @@ export const router = createBrowserRouter([
         ],
       },
       { path: "forgot-password", element: <ForgotPasswordPage /> },
+
       {
-        element: <RequirePasswordRecovery />,
-        children: [
-          {
-            path: "reset-password",
-            element: <ResetPasswordPage />,
-          },
-        ],
+        path: "reset-password",
+        element: <ResetPasswordPage />,
       },
+
       {
         element: <RequireAuth />,
         children: [
